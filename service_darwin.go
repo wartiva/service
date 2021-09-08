@@ -5,6 +5,7 @@
 package service
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"os"
@@ -147,40 +148,61 @@ func (s *darwinLaunchdService) Install() error {
 	if err != nil {
 		return err
 	}
-	defer f.Close()
 
-	path, err := s.execPath()
-	if err != nil {
-		return err
+	if len(s.DarwinLaunchdPlist) > 0 {
+		var buf bytes.Buffer
+		buf.Write(s.DarwinLaunchdPlist)
+		_, err = buf.WriteTo(f)
+		if err != nil {
+			_ = f.Close()
+			return err
+		}
+		return f.Close()
+	} else {
+		path, err := s.execPath()
+		if err != nil {
+			_ = f.Close()
+			return err
+		}
+
+		var to = &struct {
+			*Config
+			Path string
+
+			KeepAlive, RunAtLoad bool
+			SessionCreate        bool
+			StandardOut          bool
+			StandardError        bool
+		}{
+			Config:        s.Config,
+			Path:          path,
+			KeepAlive:     s.Option.bool(optionKeepAlive, optionKeepAliveDefault),
+			RunAtLoad:     s.Option.bool(optionRunAtLoad, optionRunAtLoadDefault),
+			SessionCreate: s.Option.bool(optionSessionCreate, optionSessionCreateDefault),
+		}
+
+		err = s.template().Execute(f, to)
+		if err != nil {
+			_ = f.Close()
+			return err
+		}
+		return f.Close()
 	}
-
-	var to = &struct {
-		*Config
-		Path string
-
-		KeepAlive, RunAtLoad bool
-		SessionCreate        bool
-		StandardOut          bool
-		StandardError        bool
-	}{
-		Config:        s.Config,
-		Path:          path,
-		KeepAlive:     s.Option.bool(optionKeepAlive, optionKeepAliveDefault),
-		RunAtLoad:     s.Option.bool(optionRunAtLoad, optionRunAtLoadDefault),
-		SessionCreate: s.Option.bool(optionSessionCreate, optionSessionCreateDefault),
-	}
-
-	return s.template().Execute(f, to)
 }
 
-func (s *darwinLaunchdService) Uninstall() error {
-	s.Stop()
-
-	confPath, err := s.getServiceFilePath()
+func (s *darwinLaunchdService) Uninstall() (err error) {
+	err = s.Stop()
 	if err != nil {
-		return err
+		return
 	}
-	return os.Remove(confPath)
+
+	var confPath string
+	confPath, err = s.getServiceFilePath()
+	if err != nil {
+		return
+	}
+	err = os.Remove(confPath)
+	return
 }
 
 func (s *darwinLaunchdService) Status() (Status, error) {

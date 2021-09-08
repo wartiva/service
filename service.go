@@ -134,6 +134,9 @@ type Config struct {
 
 	// System specific options.
 	Option KeyValue
+
+	// Darwin only
+	DarwinLaunchdPlist []byte
 }
 
 var (
