@@ -192,7 +192,7 @@ func (s *darwinLaunchdService) Install() error {
 
 func (s *darwinLaunchdService) Uninstall() (err error) {
 	_ = s.Stop()
-
+ 
 	var confPath string
 	confPath, err = s.getServiceFilePath()
 	if err != nil {
