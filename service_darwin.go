@@ -192,7 +192,7 @@ func (s *darwinLaunchdService) Install() error {
 
 func (s *darwinLaunchdService) Uninstall() (err error) {
 	_ = s.Stop()
- 
+
 	var confPath string
 	confPath, err = s.getServiceFilePath()
 	if err != nil {
@@ -233,7 +233,11 @@ func (s *darwinLaunchdService) Start() error {
 	if err != nil {
 		return err
 	}
-	return run("launchctl", "load", confPath)
+	err = run("launchctl", "load", confPath)
+	if err != nil && !strings.Contains(err.Error(), "service already loaded") {
+		return err
+	}
+	return nil
 }
 func (s *darwinLaunchdService) Stop() error {
 	confPath, err := s.getServiceFilePath()
