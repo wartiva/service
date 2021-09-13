@@ -199,6 +199,9 @@ func (s *darwinLaunchdService) Uninstall() (err error) {
 		return
 	}
 	err = os.Remove(confPath)
+	if os.IsNotExist(err) {
+		err = errors.New("the service is not installed")
+	}
 	return
 }
 
