@@ -234,7 +234,7 @@ func (s *darwinLaunchdService) Start() error {
 		return err
 	}
 	err = run("launchctl", "load", confPath)
-	if err != nil && !strings.Contains(err.Error(), "service already loaded") {
+	if err != nil {
 		return err
 	}
 	return nil
