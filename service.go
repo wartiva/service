@@ -437,3 +437,14 @@ type Logger interface {
 	Warningf(format string, a ...interface{}) error
 	Infof(format string, a ...interface{}) error
 }
+
+func (t Status) String() string {
+	switch t {
+	case StatusRunning:
+		return "started"
+	case StatusStopped:
+		return "stopped"
+	default:
+		return "unknown"
+	}
+}
