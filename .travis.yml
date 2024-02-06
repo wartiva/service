@@ -2,7 +2,7 @@ arch:
   - ppc64le
   - amd64
 language: go
-go_import_path: github.com/stealthmodesoft/service
+go_import_path: github.com/wartiva/service
 sudo: required
 
 go:

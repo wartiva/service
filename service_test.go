@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stealthmodesoft/service"
+	"github.com/wartiva/service"
 )
 
 func TestRunInterrupt(t *testing.T) {

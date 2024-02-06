@@ -14,7 +14,7 @@ import (
 	"os/exec"
 	"path/filepath"
 
-	"github.com/stealthmodesoft/service"
+	"github.com/wartiva/service"
 )
 
 // Config is the runner app config structure.

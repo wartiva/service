@@ -1,4 +1,4 @@
-module github.com/stealthmodesoft/service
+module github.com/wartiva/service
 
 go 1.16
 

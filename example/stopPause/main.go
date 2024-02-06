@@ -10,7 +10,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/stealthmodesoft/service"
+	"github.com/wartiva/service"
 )
 
 var logger service.Logger

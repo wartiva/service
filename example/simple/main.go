@@ -8,7 +8,7 @@ package main
 import (
 	"log"
 
-	"github.com/stealthmodesoft/service"
+	"github.com/wartiva/service"
 )
 
 var logger service.Logger
