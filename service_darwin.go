@@ -190,24 +190,24 @@ func (s *darwinLaunchdService) Install() error {
 			return err
 		}
 
-	stdOutPath, stdErrPath, _ := s.getLogPaths()
-	var to = &struct {
-		*Config
-		Path string
+		stdOutPath, stdErrPath, _ := s.getLogPaths()
+		var to = &struct {
+			*Config
+			Path string
 
-		KeepAlive, RunAtLoad bool
-		SessionCreate        bool
-		StandardOutPath      string
-		StandardErrorPath    string
-	}{
-		Config:            s.Config,
-		Path:              path,
-		KeepAlive:         s.Option.bool(optionKeepAlive, optionKeepAliveDefault),
-		RunAtLoad:         s.Option.bool(optionRunAtLoad, optionRunAtLoadDefault),
-		SessionCreate:     s.Option.bool(optionSessionCreate, optionSessionCreateDefault),
-		StandardOutPath:   stdOutPath,
-		StandardErrorPath: stdErrPath,
-	}
+			KeepAlive, RunAtLoad bool
+			SessionCreate        bool
+			StandardOutPath      string
+			StandardErrorPath    string
+		}{
+			Config:            s.Config,
+			Path:              path,
+			KeepAlive:         s.Option.bool(optionKeepAlive, optionKeepAliveDefault),
+			RunAtLoad:         s.Option.bool(optionRunAtLoad, optionRunAtLoadDefault),
+			SessionCreate:     s.Option.bool(optionSessionCreate, optionSessionCreateDefault),
+			StandardOutPath:   stdOutPath,
+			StandardErrorPath: stdErrPath,
+		}
 
 		err = s.template().Execute(f, to)
 		if err != nil {
@@ -216,7 +216,6 @@ func (s *darwinLaunchdService) Install() error {
 		}
 		return f.Close()
 	}
-	return os.Remove(confPath)
 }
 
 func (s *darwinLaunchdService) Uninstall() (err error) {
