@@ -21,7 +21,10 @@ import (
 
 const maxPathSize = 32 * 1024
 
-const version = "darwin-launchd"
+const (
+	version                   = "darwin-launchd"
+	defaultDarwinLogDirectory = "/var/log"
+)
 
 type darwinSystem struct{}
 
@@ -107,6 +110,28 @@ func (s *darwinLaunchdService) getServiceFilePath() (string, error) {
 	return "/Library/LaunchDaemons/" + s.Name + ".plist", nil
 }
 
+func (s *darwinLaunchdService) logDir() (string, error) {
+	if customDir := s.Option.string(optionLogDirectory, ""); customDir != "" {
+		return customDir, nil
+	}
+	if !s.userService {
+		return defaultDarwinLogDirectory, nil
+	}
+	return s.getHomeDir()
+}
+
+func (s *darwinLaunchdService) getLogPaths() (string, string, error) {
+	logDir, err := s.logDir()
+	if err != nil {
+		return "", "", err
+	}
+	return s.getLogPath(logDir, "out"), s.getLogPath(logDir, "err"), nil
+}
+
+func (s *darwinLaunchdService) getLogPath(logDir, logType string) string {
+	return fmt.Sprintf("%s/%s.%s.log", logDir, s.Name, logType)
+}
+
 func (s *darwinLaunchdService) template() *template.Template {
 	functions := template.FuncMap{
 		"bool": func(v bool) string {
@@ -165,20 +190,23 @@ func (s *darwinLaunchdService) Install() error {
 			return err
 		}
 
+		stdOutPath, stdErrPath, _ := s.getLogPaths()
 		var to = &struct {
 			*Config
 			Path string
 
 			KeepAlive, RunAtLoad bool
 			SessionCreate        bool
-			StandardOut          bool
-			StandardError        bool
+			StandardOutPath      string
+			StandardErrorPath    string
 		}{
-			Config:        s.Config,
-			Path:          path,
-			KeepAlive:     s.Option.bool(optionKeepAlive, optionKeepAliveDefault),
-			RunAtLoad:     s.Option.bool(optionRunAtLoad, optionRunAtLoadDefault),
-			SessionCreate: s.Option.bool(optionSessionCreate, optionSessionCreateDefault),
+			Config:            s.Config,
+			Path:              path,
+			KeepAlive:         s.Option.bool(optionKeepAlive, optionKeepAliveDefault),
+			RunAtLoad:         s.Option.bool(optionRunAtLoad, optionRunAtLoadDefault),
+			SessionCreate:     s.Option.bool(optionSessionCreate, optionSessionCreateDefault),
+			StandardOutPath:   stdOutPath,
+			StandardErrorPath: stdErrPath,
 		}
 
 		err = s.template().Execute(f, to)
