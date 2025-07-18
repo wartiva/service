@@ -97,6 +97,8 @@ const (
 	optionOpenRCScript  = "OpenRCScript"
 
 	optionLogDirectory = "LogDirectory"
+	optionRestartSec   = "RestartSec"
+	optionNice         = "Nice"
 )
 
 // Status represents service status as an byte value
@@ -140,7 +142,7 @@ type Config struct {
 
 	// Darwin only
 	DarwinLaunchdPlist []byte
-	EnvVars map[string]string
+	EnvVars            map[string]string
 }
 
 var (
