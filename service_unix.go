@@ -11,7 +11,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log/syslog"
 	"os/exec"
 	"syscall"
@@ -98,34 +97,43 @@ func runCommand(command string, readStdout bool, arguments ...string) (int, stri
 		return 0, "", fmt.Errorf("%q failed: %v", command, err)
 	}
 
-	// Zero exit status
-	// Darwin: launchctl can fail with a zero exit status,
-	// so check for emtpy stderr
-	if command == "launchctl" {
-		slurp, _ := ioutil.ReadAll(stderr)
-		if len(slurp) > 0 && !bytes.HasSuffix(slurp, []byte("Operation now in progress\n")) {
-			return 0, "", fmt.Errorf("%q failed with stderr: %s", command, slurp)
-		}
-	}
+	// all reads from the pipe must be completed before calling cmd.Wait()
+	stdErrString, _ := io.ReadAll(stderr)
 
 	if readStdout {
-		out, err := ioutil.ReadAll(stdout)
-		if err != nil {
-			return 0, "", fmt.Errorf("%q failed while attempting to read stdout: %v", command, err)
-		} else if len(out) > 0 {
+		out, stdoutReadErr := io.ReadAll(stdout)
+		if stdoutReadErr != nil {
+			_ = cmd.Wait()
+			return 0, "", fmt.Errorf(
+				"%q failed to read stdout: %v",
+				command, stdoutReadErr,
+			)
+		}
+		if len(out) > 0 {
 			output = string(out)
 		}
 	}
 
-	if err := cmd.Wait(); err != nil {
-		exitStatus, ok := isExitError(err)
+	waitErr := cmd.Wait()
+
+	// Zero exit status
+	// Darwin: launchctl can fail with a zero exit status,
+	// so check for emtpy stderr
+	if command == "launchctl" {
+		if len(stdErrString) > 0 && !bytes.HasSuffix(stdErrString, []byte("Operation now in progress\n")) {
+			return 0, "", fmt.Errorf("%q failed with stderr: %s", command, stdErrString)
+		}
+	}
+
+	if waitErr != nil {
+		exitStatus, ok := isExitError(waitErr)
 		if ok {
 			// Command didn't exit with a zero exit status.
-			return exitStatus, output, err
+			return exitStatus, output, waitErr
 		}
 
 		// An error occurred and there is no exit status.
-		return 0, output, fmt.Errorf("%q failed: %v", command, err)
+		return 0, output, fmt.Errorf("%q failed: %v", command, waitErr)
 	}
 
 	return 0, output, nil
